@@ -21,7 +21,7 @@ tasks.register<Copy>("createJar") {
     include("classes.jar")
     rename("classes.jar", "plugin.jar")
 }
-val versionName = "0.1"
+val versionName = "0.2"
 group = "com.jar.internal.custom_rules_lint"
 version = versionName
 
@@ -40,8 +40,8 @@ publishing {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/Changejarapp/Jar-Core-Custom-Detekt-Plugins")
             credentials {
-                username = "aditya-jar"
-                password = "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"
+                username = ""
+                password = ""
             }
         }
     }

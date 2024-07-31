@@ -44,7 +44,7 @@ class ContextCompatUsageDetector : Detector(), Detector.UastScanner {
                 val name = node.methodName ?: return
 
                 when (name) {
-                    "getSystemService" -> {
+                    "getDrawable" -> {
                         println("SEEHERE get Drawable ${isContextCompatCall(node)}}")
                         if (isContextCompatCall(node)) {
                             context.report(
