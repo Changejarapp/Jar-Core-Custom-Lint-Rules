@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The Android Open Source Project
+ * Copyright 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.lint.custom_lint_rules
+package com.jar.custom_lint
 
 import com.android.tools.lint.client.api.UElementHandler
 import com.android.tools.lint.detector.api.Category
@@ -25,13 +25,11 @@ import com.android.tools.lint.detector.api.JavaContext
 import com.android.tools.lint.detector.api.Scope
 import com.android.tools.lint.detector.api.Severity
 import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UClassLiteralExpression
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.*
 
-/**
- * A detector that checks for ContextCompat.getDrawable() usage in the project
- */
-class ContextCompatUsageDetector : Detector(), Detector.UastScanner {
+
+class AnalyticsApiPostEventInFragmentDetector : Detector(), Detector.UastScanner {
 
     override fun getApplicableUastTypes(): List<Class<out UElement>> = listOf(
         UCallExpression::class.java,
@@ -40,26 +38,37 @@ class ContextCompatUsageDetector : Detector(), Detector.UastScanner {
     override fun createUastHandler(context: JavaContext): UElementHandler =
         object : UElementHandler() {
             override fun visitCallExpression(node: UCallExpression) {
-                println("SEEHERE caexpresion ${node.methodName}")
                 val name = node.methodName ?: return
 
                 when (name) {
-                    "getDrawable" -> {
-                        println("SEEHERE get Drawable ${isContextCompatCall(node)}}")
-                        if (isContextCompatCall(node)) {
+                    "postEvent" -> {
+                        if (isPostEventCallOnAnalyticsApi(node) && isInFragment(node)) {
                             context.report(
-                                ISSUE,
+                                ISSUE ,
                                 node,
                                 context.getLocation(node),
-                                "Use AppCompatResources.getDrawable instead of ContextCompat.getDrawable"
+                                "AnalyticsApi.postEvent should be called in ViewModel, not in Fragment"
                             )
                         }
                     }
                 }
             }
-            private fun isContextCompatCall(node: UCallExpression): Boolean {
-                val receiver = node.receiver?.asSourceString()
-                return receiver?.contains("ContextCompat") == true
+
+            private fun isPostEventCallOnAnalyticsApi(node: UCallExpression): Boolean {
+                val receiver = node.receiver as? UReferenceExpression ?: return false
+                val resolvedType = receiver.getExpressionType() ?: return false
+                return resolvedType.canonicalText.contains("AnalyticsApi")
+            }
+
+            private fun isInFragment(node: UCallExpression): Boolean {
+                val containingClass = node.getContainingUClass() ?: return false
+                return containingClass.supers.any {
+                    println("BaseFragment = ${it.qualifiedName}")
+                    it.qualifiedName == "com.jar.app.base.ui.fragment.BaseFragment" || it.qualifiedName == "com.jar.app.base.ui.fragment.BaseDialogFragment"
+                }
+            }
+            override fun visitClassLiteralExpression(node: UClassLiteralExpression) {
+
             }
 
         }
@@ -67,16 +76,17 @@ class ContextCompatUsageDetector : Detector(), Detector.UastScanner {
     companion object {
         @JvmField
         val ISSUE: Issue = Issue.create(
-            id = "ContextCompatUsage",
-            briefDescription = "ContextCompatUsage",
-            explanation = "Avoid using `ContextCompat.getDrawable` as it can cause crashes on Android 6.0 and below due to issues with vector drawable support enabled in our project. Consider using alternative methods to ensure compatibility and stability.",
+            id = "AnalyticsApiPostEventInFragmentDetector",
+            briefDescription = "AnalyticsApiPostEventInFragmentDetector",
+            explanation = "AnalyticsApi.postEvent should be called in ViewModel, not in Fragment",
             category = Category.CUSTOM_LINT_CHECKS,
             priority = 7,
             severity = Severity.ERROR,
             implementation = Implementation(
-                ContextCompatUsageDetector::class.java,
+                AnalyticsApiPostEventInFragmentDetector::class.java,
                 Scope.JAVA_FILE_SCOPE,
             ),
+            androidSpecific = true
         )
     }
 }

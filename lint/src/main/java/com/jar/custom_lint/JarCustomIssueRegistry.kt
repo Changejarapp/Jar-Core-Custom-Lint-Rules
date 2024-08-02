@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package com.example.lint.custom_lint_rules
+package com.jar.custom_lint
 
 import com.android.tools.lint.client.api.IssueRegistry
 import com.android.tools.lint.client.api.Vendor
 import com.android.tools.lint.detector.api.CURRENT_API
-import com.example.lint_custom_rule.lint_check.custom_lint_rules.AnalyticsApiPostEventInFragmentDetector
 
 
-class NiaIssueRegistry : IssueRegistry() {
+class JarCustomIssueRegistry : IssueRegistry() {
 
     override val issues = listOf(
         ContextCompatUsageDetector.ISSUE,
